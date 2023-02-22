@@ -61,7 +61,7 @@ response = s3.create_bucket(Bucket=bucketName, CreateBucketConfiguration={'Locat
 print(response)
 
 #Storing of the website conetent index.html into the S3 bucket
-s3.put_object(Body='<html><body><h1>Hello World</h1></body></html>', Bucket=bucketName, Key='index.html', ContentType='text/html')
+s3.put_object(Body='Hello world code(Tags causing Confusion in readme)', Bucket=bucketName, Key='index.html', ContentType='text/html')
 bucket = s3.Bucket(bucketName)
 url=s3.get_bucket_website(Bucket=bucketName)
 #Storing of the URL website conetent index.html into the S3 bucket
