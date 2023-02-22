@@ -44,7 +44,7 @@ security_group.authorize_ingress(IpProtocol='tcp', FromPort=80, ToPort=80, CidrI
 
 **2. Deploy EC2 instance and attach it to the Subnet.**
 
-+ Networkid helps ensure the privacy of your network. You can use any number here (where we used “1114”), but other peers joining your network must use the same one.
++
 ```
 #2) Launch an EC2 instance using an AMI image, specifying the subnet, security group, and key pair
 ec2resource = boto3.resource('ec2')
@@ -67,10 +67,10 @@ url=s3.get_bucket_website(Bucket=bucketName)
 #Storing of the URL website conetent index.html into the S3 bucket
 print(url)
 ```
+
 **4. Install Nginx in the EC2 instance (using remote execution)**
 +
-```
-# Wait for the instance to be running
+```# Wait for the instance to be running
 instance.wait_until_running()
 
 # Create an SSM client
