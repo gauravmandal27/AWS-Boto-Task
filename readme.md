@@ -22,14 +22,34 @@ Run Any Python IDE
 ## Deployment <a name="deployment"></a>
 **1. Create VPC and Subnets**
 ```
-geth --datadir ./myDataDir init ./myGenesis.json
+#1) Create an ec2 resource object
+ec2 = boto3.resource('ec2', region_name='us-east-1')
+
+# Create a VPC with CIDR block 192.168.10.8/24
+vpc = ec2.create_vpc(CidrBlock='192.168.10.8/24')
+
+# Enable public DNS hostname for the VPC
+ec2Client = boto3.client('ec2')
+ec2Client.modify_vpc_attribute(VpcId=vpc.id, EnableDnsSupport={'Value': True})
+ec2Client.modify_vpc_attribute(VpcId=vpc.id, EnableDnsHostnames={'Value': True})
+
+# Create a subnet with CIDR block 192.168.10.8/28 within the VPC
+subnet = vpc.create_subnet(CidrBlock='192.168.10.8/28')
+
+# Create a security group that allows SSH and HTTP access from anywhere
+security_group = ec2.create_security_group(GroupName='my-sg', Description='My security group', VpcId=vpc.id)
+security_group.authorize_ingress(IpProtocol='tcp', FromPort=22, ToPort=22, CidrIp='0.0.0.0/0')
+security_group.authorize_ingress(IpProtocol='tcp', FromPort=80, ToPort=80, CidrIp='0.0.0.0/0')
 ```
 
-**2. Start your Ethereum peer node.**
+**2. Deploy EC2 instance and attach it to the Subnet.**
 
 + Networkid helps ensure the privacy of your network. You can use any number here (where we used “1114”), but other peers joining your network must use the same one.
 ```
-geth --datadir ./myDataDir --networkid 1114 console 2>> myEth.log
+#2) Launch an EC2 instance using an AMI image, specifying the subnet, security group, and key pair
+ec2resource = boto3.resource('ec2')
+instance = ec2resource.create_instances(ImageId='ami-0ffac3e16de16665e', InstanceType='t2.micro', KeyName='my-key1', SubnetId=subnet,MinCount=1, MaxCount=1, TagSpecifications=[{'ResourceType': 'instance', 'Tags': [{'Key': 'Name', 'Value': 'test-instance-2'}]}])
+print(instance)
 ```
 + Output should look like this:
 ```
@@ -45,92 +65,29 @@ modules: admin:1.0 clique:1.0 debug:1.0 eth:1.0 miner:1.0 net:1.0 personal:1.0 r
 ```
 This is the geth JavaScript console. Any command with the symbol > should be typed here.
 
-**3. Display your Ethereum logs**
+**3. Create S3 bucket and deploy static website (hello world) using python**
 
 + Open another terminal window
-+ ```cd my-eth-chain```
++ ```#3)Creation of an S3 Bucket
+s3 = boto3.client('s3')
+bucketName='sample-bucket-for-cloud-deployment-test'
+response = s3.create_bucket(Bucket=bucketName, CreateBucketConfiguration={'LocationConstraint': 'us-east-1'})
+print(response)
+
+#Storing of the website conetent index.html into the S3 bucket
+s3.put_object(Body='<html><body><h1>Hello World</h1></body></html>', Bucket=bucketName, Key='index.html', ContentType='text/html')
+bucket = s3.Bucket(bucketName)
+url=s3.get_bucket_website(Bucket=bucketName)
+#Storing of the URL website conetent index.html into the S3 bucket
+print(url)
+```
 + Type ```tail -f myEth.log```
 
-**4. Import/Create an Account**
+**4. Install Nginx in the EC2 instance (using remote execution)**
 
 + If you allocated ETH in the Genesis file, import the corresponding account by dragging the UTC file into the ```myDataDir/keystoredirectory``` and skip to step 5.
 + In the geth JavaScript console, create an account:
 ```
-> personal.newAccount("<YOUR_PASSPHRASE>")
-```
-+ Do not forget this passphrase! You will be typing this a lot, so for this test network you can keep it simple.
-
-**5. Set Default Account**
-+ Check your default account, type
-```
-> eth.coinbase
-```
-+ If this address is the same as the one from step 4, skip the rest of step 5.
-+ To set your default account, type 
-```
-> miner.setEtherbase(web3.eth.accounts[0])
-```
-
-**6. Start mining**
-+ Check your balance with 
-```
-> eth.getBalance(eth.coinbase)
-```
-+ Run 
-```
-> miner.start()
-```
-+ Look at your other terminal window, you should see some mining action in the logs. Check your balance again and it should be higher.
-+ To end mining, type
-```
-> miner.stop()
-```
-
-## Built With <a name="built_with"></a>
-Mobile App:
-+ [Android Studio](https://developer.android.com/studio/) - Android app
-+ [NodeJs](https://nodejs.org/en/) - Server Environment
-+ [MySQL](https://dev.mysql.com/downloads/os-linux.html) - Database
-
-Blockchain:
-+ [Ethereum](https://www.ethereum.org/) - Blockchain Network
-+ [Solidity](https://github.com/ethereum/solidity) - Smart Contracts
-+ [Ganache](https://truffleframework.com/ganache) - Create private Ethereum blockchain to run tests
-
-Website:
-+ HTML - Markup language for creating web pages
-+ CSS - Style Sheet Language
-+ JavaScript - Scripting Language for web pages
-+ Bootstrap - Templating
-
-## Limitations <a name="limitations"></a>
-+ The user needs to have a QR code scanner in order to check the product information.
-+ Products that have already been manufactured prior to today cannot be tracked.
-+ We currently depend on the company to register with our services, without which, we cannot provide information about a brand to the user.
-
-## Future Scope <a name="future_scope"></a>
-+ To track every genuine product that is to be sold.
-+ Implement this idea in other fields.
-+ Virtual transactions
-+ Using tamper-proof tags
-+ Dynamic (read & write NFC tags)
-+ QR codes which have secure graphic
-+ Implement our own tokens which can be sold to users so that they can purchase ownership of a product using tokens which helps in insurance processing. 
-
-## Contributing <a name="contributing"></a>
-1. Fork it (<https://github.com/kylelobo/AuthentiFi/fork>)
-2. Create your feature branch (`git checkout -b feature/fooBar`)
-3. Commit your changes (`git commit -am 'Add some fooBar'`)
-4. Push to the branch (`git push origin feature/fooBar`)
-5. Create a new Pull Request
 
 ## Authors <a name="authors"></a>
-+ [Calden Rodrigues](https://github.com/caldenrodrigues) <br>
-+ [JohnAnand Abraham](https://github.com/johnanand) <br>
-+ [Kyle Lobo](https://github.com/kylelobo) <br>
-+ [Pratik Nerurkar](https://github.com/PlayPratz) <br>
-
-See also the list of [contributors](https://github.com/kylelobo/AuthentiFi/contributors) who participated in this project.
-
-## Acknowledgements <a name="acknowledgements"></a>
-[How To: Create Your Own Private Ethereum Blockchain](https://medium.com/mercuryprotocol/how-to-create-your-own-private-ethereum-blockchain-dad6af82fc9f) - _Mercury Protocol_
++ [Gaurav Mandal](https://github.com/gauravmandal27) <br>
