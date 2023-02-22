@@ -43,8 +43,6 @@ security_group.authorize_ingress(IpProtocol='tcp', FromPort=80, ToPort=80, CidrI
 ```
 
 **2. Deploy EC2 instance and attach it to the Subnet.**
-
-+
 ```
 #2) Launch an EC2 instance using an AMI image, specifying the subnet, security group, and key pair
 ec2resource = boto3.resource('ec2')
@@ -53,8 +51,8 @@ print(instance)
 ```
 
 **3. Create S3 bucket and deploy static website (hello world) using python**
-
-+ ```#3)Creation of an S3 Bucket
+```
+#3)Creation of an S3 Bucket
 s3 = boto3.client('s3')
 bucketName='sample-bucket-for-cloud-deployment-test'
 response = s3.create_bucket(Bucket=bucketName, CreateBucketConfiguration={'LocationConstraint': 'us-east-1'})
@@ -69,8 +67,8 @@ print(url)
 ```
 
 **4. Install Nginx in the EC2 instance (using remote execution)**
-+
-```# Wait for the instance to be running
+```
+# Wait for the instance to be running
 instance.wait_until_running()
 
 # Create an SSM client
