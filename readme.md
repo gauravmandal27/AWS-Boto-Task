@@ -1,6 +1,8 @@
 <div align="center">
 
   **AWS CLoud Deployment Task**
+ 
+ Static Web Site Link: https://sample-bucket-for-cloud-deployment-test.s3.amazonaws.com/index.html
 </div>
 
 
@@ -19,7 +21,7 @@ $ aws configure
 ```
 Run Any Python IDE
 
-## Deployment <a name="deployment"></a>
+## Tasks <a name="deployment"></a>
 **1. Create VPC and Subnets**
 ```
 #1) Create an ec2 resource object
