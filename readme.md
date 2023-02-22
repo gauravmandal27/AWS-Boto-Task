@@ -51,23 +51,9 @@ ec2resource = boto3.resource('ec2')
 instance = ec2resource.create_instances(ImageId='ami-0ffac3e16de16665e', InstanceType='t2.micro', KeyName='my-key1', SubnetId=subnet,MinCount=1, MaxCount=1, TagSpecifications=[{'ResourceType': 'instance', 'Tags': [{'Key': 'Name', 'Value': 'test-instance-2'}]}])
 print(instance)
 ```
-+ Output should look like this:
-```
-Welcome to the Geth JavaScript console!
-
-instance: Geth/v1.7.3-stable-4bb3c89d/darwin-amd64/go1.8.3
-coinbase: 0xae13d41d66af28380c7af6d825ab557eb271ffff
-at block: 5 (Thu, 07 Dec 2017 17:08:48 PST)
-datadir: /Users/test/my-eth-chain/myDataDir
-modules: admin:1.0 clique:1.0 debug:1.0 eth:1.0 miner:1.0 net:1.0 personal:1.0 rpc:1.0 txpool:1.0 web3:1.0
-
->
-```
-This is the geth JavaScript console. Any command with the symbol > should be typed here.
 
 **3. Create S3 bucket and deploy static website (hello world) using python**
 
-+ Open another terminal window
 + ```#3)Creation of an S3 Bucket
 s3 = boto3.client('s3')
 bucketName='sample-bucket-for-cloud-deployment-test'
@@ -81,13 +67,37 @@ url=s3.get_bucket_website(Bucket=bucketName)
 #Storing of the URL website conetent index.html into the S3 bucket
 print(url)
 ```
-+ Type ```tail -f myEth.log```
-
 **4. Install Nginx in the EC2 instance (using remote execution)**
++
+```
+# Wait for the instance to be running
+instance.wait_until_running()
 
-+ If you allocated ETH in the Genesis file, import the corresponding account by dragging the UTC file into the ```myDataDir/keystoredirectory``` and skip to step 5.
-+ In the geth JavaScript console, create an account:
+# Create an SSM client
+ssm = boto3.client('ssm')
+
+#4) Installation of nginx on the instance using Systems Manager Run Command
+response = ssm.send_command(
+    DocumentName='AWS-RunShellScript',
+    Parameters={'commands': ['sudo apt install nginx']},
+    InstanceIds=[instance.id]
+)
+
+# Wait for the command to complete
+command_id = response['Command']['CommandId']
+status = 'Pending'
+while status == 'Pending' or status == 'InProgress':
+    time.sleep(5)
+    status = ssm.list_commands(CommandId=command_id)['Commands'][0]['Status']
+
+# Check if the command was successfully executed
+if status == 'Success':
+    print('nginx installed successfully')
+else:
+    print('nginx installation failed')
+
 ```
 
 ## Authors <a name="authors"></a>
 + [Gaurav Mandal](https://github.com/gauravmandal27) <br>
+##
